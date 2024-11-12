@@ -6,14 +6,18 @@ Run full MSM Moco.track optim workflow
 import os
 from pathlib import Path
 
-from moco_emu import moco_predict_kinematics
-from sto_generator import generate_sto
-from moco_track_inverse_dynamics import moco_track_states
-from sto_visualizer import visualize_sto
+from src.moco_emu import moco_predict_kinematics
+from src.sto_generator import generate_sto
+from src.moco_track_inverse_dynamics import moco_track_states
+from src.sto_visualizer import visualize_sto
 
 from utils.md_logger import log_md
 try:
-    from utils.get_md_log_file import md_log_file
+    from utils.get_paths import model_file
+except ImportError:
+    model_file = None
+try:
+    from utils.get_paths import md_log_file
 except ImportError:
     md_log_file = None
 
@@ -21,20 +25,13 @@ except ImportError:
 # Main ------------------------------------------------------------------------
 @log_md(md_log_file)
 def run_moco_modules(
+    model_file,
+    filter_params,
     generate_gait=False,
     generate_kinematics_sto=False,
     generate_moco_track=False,
     visualize=False,
 ):
-    work_dir = "/mnt/e/vms/vms_SharedDataFolder/MSM/pacha/"
-    model_file = Path("Dromaius_model_v4_intermed.osim")
-
-    os.chdir(work_dir)
-
-    filter_params = {
-        "state_filters": ["jointset"],
-        "invert_filter": False,
-    }
 
     if generate_gait:
         # generate Pasha's gait prediction (Python version)
@@ -47,7 +44,7 @@ def run_moco_modules(
         track_states_file = generate_sto(
             gait_prediction_file,
             filter_params,
-            visualize=True,
+            visualize=visualize,
         )
     else:
         track_states_file = Path(
@@ -75,9 +72,20 @@ def run_moco_modules(
 
 
 if __name__ == "__main__":
+    model_file = Path(model_file) if model_file else Path("Dromaius_model_v4_intermed.osim")
+
+    if model_file.parents[0]:
+        os.chdir(model_file.parents[0])
+
+    filter_params = {
+        "state_filters": ["jointset"],
+        "invert_filter": False,
+    }
     run_moco_modules(
+        model_file,
+        filter_params,
         generate_gait=False,
         generate_kinematics_sto=True,
-        generate_moco_track=True,
+        generate_moco_track=False,
         visualize=False,
     )

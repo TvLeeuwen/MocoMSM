@@ -9,9 +9,9 @@ import opensim as osim
 import numpy as np
 import math
 
-from md_logger import log_md
+from utils.md_logger import log_md
 try:
-    from get_md_log_file import md_log_file
+    from utils.get_md_log_file import md_log_file
 except ImportError:
     md_log_file = None
 

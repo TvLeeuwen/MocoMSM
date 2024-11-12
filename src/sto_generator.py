@@ -100,15 +100,18 @@ def read_input(input_file):
         # print(data.keys())
         df = pd.DataFrame(data["WeightedToes"])
 
+        # states = jointset, forceset/activation, forceset/normalized_tendon_force
+        # controls = forceset/muscles
+
         # Set basic header
         header.append("inDegrees=no\n")
-        header.append("num_controls=12\n")
+        header.append("num_controls=2\n")
         header.append("num_derivatives=0\n")
         header.append("num_input_controls=0\n")
         header.append("num_multipliers=0\n")
         header.append("num_parameters=0\n")
         header.append("num_slacks=0\n")
-        header.append("num_states=54\n")
+        header.append("num_states=12\n")
         header.append("DataType=double\n")
         header.append("version=3\n")
         header.append("OpenSimVersion=4.5-2024-07-10-f38669b70\n")

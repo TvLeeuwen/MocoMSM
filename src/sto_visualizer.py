@@ -6,7 +6,7 @@ import os, sys
 import argparse
 import pandas as pd
 import plotly.graph_objects as go
-from sto_generator import read_input, filter_states_visualization
+from src.sto_generator import read_input, filter_states_visualization
 from pathlib import Path
 
 from utils.filters import filter_states_visualization

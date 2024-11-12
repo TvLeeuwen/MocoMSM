@@ -1,5 +1,5 @@
 # logfiles
-**/get_md_log_file.py
+**/get_paths.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -52,6 +52,12 @@ def parse_arguments():
         type=str,
         help="Filename for output .sto file",
     )
+    parser.add_argument(
+        "-l",
+        "--log",
+        action="store_true",
+        help="Activate to log run",
+    )
     return parser.parse_args()
 
 
@@ -99,6 +105,10 @@ if __name__ == "__main__":
 
     if model_file.parents[0]:
         os.chdir(model_file.parents[0])
+
+    print(args.log)
+    # if not args.log:
+    #     md_log_file = None
 
     sto_from_model(
         model_file,
