@@ -23,7 +23,7 @@ from pathlib import Path
 
 from utils.md_logger import log_md
 try:
-    from utils.get_md_log_file import md_log_file
+    from utils.get_paths import md_log_file
 except ImportError:
     md_log_file = None
 
@@ -94,10 +94,10 @@ def set_state_weights(
     for state_name in state_names:
         if filters:
             weight = (
-                100 if (any(f in state_name for f in filters) != inverse_filter) else 0
+                10 if (any(f in state_name for f in filters) != inverse_filter) else 0
             )
         else:
-            weight = 100
+            weight = 10
         state_weights.cloneAndAppend(osim.MocoWeight(state_name, weight))
         if weight:
             tracked_states += 1
@@ -122,11 +122,15 @@ def moco_track_states(
     input_sto_file: Path | None,
     filter_params: dict,
     output_file: Path | None = None,
-) -> None:
+) -> Path:
+
+    if model_file.parents[0]:
+        os.chdir(model_file.parents[0])
+        model_file = Path(model_file.name)
 
     # Handle Paths
     input_sto_file = (
-        input_sto_file
+        Path(input_sto_file.name)
         if input_sto_file
         else Path(str(model_file.with_suffix("")) + "_moco_track_states.sto")
     )
@@ -136,9 +140,17 @@ def moco_track_states(
         else Path(str(input_sto_file.with_suffix("")) + "_solution.sto")
     )
 
+    print(os.getcwd())
+    print(model_file)
+    print(input_sto_file)
+    print(output_file)
+
     # Moco
     track = osim.MocoTrack()
     track.setName(model_file.stem)
+
+    osim.Logger.setLevelString("Info")
+    # osim.Logger.setLevelString("Debug")
 
     # Load model and adapt model
     modelProcessor = osim.ModelProcessor(str(model_file))
@@ -184,7 +196,7 @@ def moco_track_states(
         solution.unseal()
         solution.write(str(output_file))
 
-        sys.exit(f"-- Gait prediction failed, writing:\n - {output_file}")
+        sys.exit(f"-- Tracking failed, writing:\n - {output_file}")
     else:
         output_file = Path(output_file.stem + "_success.sto")
         solution.write(str(output_file))
@@ -193,14 +205,11 @@ def moco_track_states(
 
         print(f"-- Tracking succesful, writing:\n - {str(output_file)}\n - {str(output_file.stem + '_fullstride.sto')}")
 
+    return output_file
+
 
 if __name__ == "__main__":
     args = parse_arguments()
-
-    model_file = Path(args.model)
-
-    if model_file.parents[0]:
-        os.chdir(model_file.parents[0])
 
     filter_params = {
         "state_filters": args.filter,
@@ -208,7 +217,7 @@ if __name__ == "__main__":
     }
 
     moco_track_states(
-        model_file,
+        Path(args.model),
         Path(args.sto),
         filter_params,
         args.output,

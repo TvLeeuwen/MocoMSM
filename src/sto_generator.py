@@ -9,11 +9,10 @@ import plotly.graph_objects as go
 
 from utils.filters import filter_states, filter_states_visualization
 from utils.osim_model_parser import parse_model
-
 from utils.md_logger import log_md
 
 try:
-    from utils.get_md_log_file import md_log_file
+    from utils.get_paths import md_log_file
 except ImportError:
     md_log_file = None
 
@@ -117,7 +116,10 @@ def read_input(input_file):
         header.append("OpenSimVersion=4.5-2024-07-10-f38669b70\n")
         header.append("endheader\n")
 
+        framerate = 100
         df = df.rename(columns={"FrameNumber": "time"})
+        df["time"] = df["time"] / framerate
+
         df = df.rename(columns={"kneeAng": "/jointset/knee/knee_flexion/value"})
         df = df.rename(columns={"kneeAngvel": "/jointset/knee/knee_flexion/speed"})
         df = df.rename(columns={"kneeAngacc": "/jointset/knee/knee_flexion/accel"})
@@ -125,6 +127,24 @@ def read_input(input_file):
         df = df.rename(columns={"ankleAngvel": "/jointset/ankle/ankle_flexion/speed"})
         df = df.rename(columns={"ankleAngacc": "/jointset/ankle/ankle_flexion/accel"})
 
+        # df[
+        #     [
+        #         "/jointset/knee/ground_to_tibia_tx/value",
+        #         "/jointset/knee/ground_to_tibia_ty/value",
+        #     ]
+        # ] = pd.DataFrame(df["tibiaCOM"].tolist(), index=df.index)
+        # df[
+        #     [
+        #         "/jointset/knee/ground_to_tibia_tx/speed",
+        #         "/jointset/knee/ground_to_tibia_ty/speed",
+        #     ]
+        # ] = pd.DataFrame(df["tibiaCOMvel"].tolist(), index=df.index)
+        # df[
+        #     [
+        #         "/jointset/knee/ground_to_tibia_tx/accel",
+        #         "/jointset/knee/ground_to_tibia_ty/accel",
+        #     ]
+        # ] = pd.DataFrame(df["tibiaCOMacc"].tolist(), index=df.index)
     else:
         sys.exit(
             f"Error: Input format ({input_file.suffix}) not supported. Must be .sto or .mat. Exiting"
@@ -171,13 +191,18 @@ def generate_df_from_model(model_file, df):
     df2 = pd.DataFrame(0, index=range(len(df["time"])), columns=states)
     df2["time"] = df["time"]
 
+    # Hardcoded filter
     for state in states:
-        if "jointset" in state and "ground" not in state:
+        # if "jointset" in state and "ground" not in state:
+        #     print(f" - Writing state: {state}")
+        #     df2[state] = df[state]
+        if "jointset" in state:
             print(f" - Writing state: {state}")
             df2[state] = df[state]
 
     # Get rid of leftover empty matlab lists ([])
     df2 = df2.map(lambda x: 0 if isinstance(x, np.ndarray) and len(x) == 0 else x)
+    df2 = df2.map(lambda x: 0.1 if pd.isna(x) else x)
 
     return df2
 
@@ -186,7 +211,7 @@ def generate_df_from_model(model_file, df):
 @log_md(md_log_file)
 def generate_sto(
     input_file: Path,
-    filter_params: dict,
+    filter_params: dict | None = None,
     model_file: Path | None = None,
     output_file: Path | None = None,
     visualize=False,
@@ -202,25 +227,26 @@ def generate_sto(
 
     returns: `output_file`: Path to generated .sto
     """
-    # output_file = (
-    #     Path(model_file.stem + "_moco_track_states.sto")
-    #     if output_file is None
-    #     elif Path(input_file.stem + "_moco_track_states.sto")
-    #     if model_file is None
-    #     else output_file
-    # )
     output_file = (
-        Path(model_file.stem + "_moco_track_states.sto")
+        model_file.with_name(model_file.stem + "_moco_track_states.sto")
         if output_file is None and model_file is not None
         else Path(input_file.stem + "_moco_track_states.sto")
         if output_file is None and model_file is None and input_file is not None
         else output_file
     )
-
-    df, header = read_input(input_file)
+    filter_params = (
+        {
+            "state_filters": None,
+            "invert_filter": False,
+        }
+        if filter_params is None
+        else filter_params
+    )
 
     if filter_params["state_filters"]:
         df = filter_states(df, filter_params)
+
+    df, header = read_input(input_file)
 
     if input_file.suffix == ".mat":
         if model_file:
@@ -230,8 +256,6 @@ def generate_sto(
 
     write_header(output_file, header)
     write_columns(df, output_file)
-
-    print(f"-- Output .sto generated:\n - {output_file}")
 
     if visualize:
         visualize_states(df)

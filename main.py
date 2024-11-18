@@ -27,8 +27,8 @@ filter_params = {
 run_moco_modules(
     model_file,
     filter_params,
-    generate_gait=True,
-    generate_kinematics_sto=True,
+    generate_gait=False,
+    generate_kinematics_sto=False,
     generate_moco_track=True,
     visualize=False,
 )
