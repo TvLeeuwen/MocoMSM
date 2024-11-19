@@ -2,9 +2,8 @@
 Visualize, animate, and compare .sto files
 """
 # Imports ---------------------------------------------------------------------
-import os, sys
+import os
 import argparse
-import pandas as pd
 import plotly.graph_objects as go
 from src.sto_generator import read_input, filter_states_visualization
 from pathlib import Path
@@ -13,7 +12,7 @@ from utils.filters import filter_states_visualization
 
 from utils.md_logger import log_md
 try:
-    from utils.get_md_log_file import md_log_file
+    from utils.get_paths import md_log_file
 except ImportError:
     md_log_file = None
 
