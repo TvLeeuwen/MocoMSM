@@ -13,7 +13,7 @@ Run Moco to predict Emu gait based on Pacha van Bijleveld's Emu model
 `Dromaius_model_v4_intermed.osim`
 
 ## Moco app
-Run the Moco track app using `streamline run moco_app.py`.
+Run the Moco track app using `streamlit run moco_app.py`.
 Select or drag and drop the model / kinematics you want to run track.
 
 ## OR
@@ -35,3 +35,7 @@ Track kinematic states and run inverse kinematics using Moco.Track
 ### visualize
 Visualize a .sto file
 
+
+<sub>This repo is by no means a finished project and is therefore prone to bugs and errors.
+In case you happen to run into any problems you are welcom to open and issue,
+but there is no garanty these will be addressed in a reasonable timespan.</sub>
