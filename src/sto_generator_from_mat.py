@@ -1,11 +1,9 @@
 # imports ---------------------------------------------------------------------
-import os, sys
+import os
 import argparse
 from pathlib import Path
 import pandas as pd
 import numpy as np
-from pymatreader import read_mat
-import plotly.graph_objects as go
 
 from utils.osim_model_parser import parse_model
 from sto_generator import read_input, write_header, write_columns
@@ -107,8 +105,6 @@ if __name__ == "__main__":
         os.chdir(model_file.parents[0])
 
     print(args.log)
-    # if not args.log:
-    #     md_log_file = None
 
     sto_from_model(
         model_file,

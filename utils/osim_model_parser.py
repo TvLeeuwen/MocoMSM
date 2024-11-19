@@ -35,19 +35,6 @@ def parse_arguments():
     return parser.parse_args()
 
 
-# Defs ------------------------------------------------------------------------
-
-# def parse_data(element):
-#     print(f"- {element.tag}")
-#     if element.attrib:
-#         print(f"  - {element.attrib}")
-#     if element.text and element.text.strip():
-#         print(f"    {element.text.strip()}")
-#     for child in element:
-#         print(" -", end="")
-#         parse_data(child)
-
-
 # Main ------------------------------------------------------------------------
 def parse_model(osim):
     """
