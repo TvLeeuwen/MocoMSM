@@ -9,7 +9,7 @@
 
 ## Input
 ### Model
-Run Moco to predict Emu gait based on Pacha van Bijleveld's Emu model
+Run Moco to predict Emu gait based on Pacha van Bijlert's Emu model
 `Dromaius_model_v4_intermed.osim`
 
 ## Moco app
@@ -37,5 +37,5 @@ Visualize a .sto file
 
 
 <sub>This repo is by no means a finished project and is therefore prone to bugs and errors.
-In case you happen to run into any problems you are welcom to open and issue,
-but there is no garanty these will be addressed in a reasonable timespan.</sub>
+In case you happen to run into any problems you are welcom to open an issue,
+but there is no garanty that these will be addressed within a reasonable timespan.</sub>
