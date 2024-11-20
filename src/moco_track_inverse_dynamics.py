@@ -140,11 +140,6 @@ def moco_track_states(
         else Path(str(input_sto_file.with_suffix("")) + "_solution.sto")
     )
 
-    print(os.getcwd())
-    print(model_file)
-    print(input_sto_file)
-    print(output_file)
-
     # Moco
     track = osim.MocoTrack()
     track.setName(model_file.stem)
@@ -186,7 +181,9 @@ def moco_track_states(
     study = track.initialize()
     solver = osim.MocoCasADiSolver.safeDownCast(study.updSolver())
     solver.set_num_mesh_intervals(100)
-    solver.set_optim_convergence_tolerance(1e-3)
+    solver.set_optim_max_iterations(3000)
+    solver.set_optim_convergence_tolerance(1e-2)
+    # solver.set_optim_convergence_tolerance(1e-3)
     solver.set_optim_constraint_tolerance(1e-4)
 
     solution = study.solve()
