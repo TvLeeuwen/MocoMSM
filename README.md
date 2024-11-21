@@ -32,7 +32,7 @@ Select or drag and drop the model / kinematics you want to run track.
 
 ## Run modules
 Run individual methods by calling python -m. 
-(e.g. `python -m src.moco_track_inverse_dynamics -h`)
+(e.g. `python -m src.moco_track_kinematics -h`)
 
 ### generate_gait
 Predicts Emu gait from the model alone. Uses a Moco guess to initiate movement

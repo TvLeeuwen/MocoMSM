@@ -8,7 +8,7 @@ from pathlib import Path
 
 from src.moco_emu import moco_predict_kinematics
 from src.sto_generator import generate_sto
-from src.moco_track_inverse_dynamics import moco_track_states
+from src.moco_track_kinematics import moco_track_states
 from src.sto_visualizer import visualize_sto
 
 from utils.md_logger import log_md

@@ -3,10 +3,11 @@ import streamlit as st
 import os
 from pathlib import Path
 from src.sto_generator import generate_sto
-from src.moco_track_inverse_dynamics import moco_track_states
+from src.moco_track_kinematics import moco_track_states
 
 
 def write_to_temp(uploaded_file):
+    os.makedirs("app/output", exist_ok=True)
     temp_path = os.path.join("app/output", uploaded_file.name)
     with open(temp_path, "wb") as f:
         f.write(uploaded_file.getbuffer())
@@ -55,15 +56,14 @@ if osim_file is not None and mat_file is not None:
             st.success("Script executed successfully!")
             st.write(f"Solution written: {tracked_states_solution_file}")
 
-            if st.button("Download solution"):
-                with open(tracked_states_solution_file.name, "rb") as temp_file:
-                    st.download_button(
-                        label="Download solution",
-                        data=temp_file,
-                        # file_name=f"{tracked_states_solution_file}",
-                        mime="text/csv",
-                    )
-
+            # if st.button("Download solution"):
+            #     with open(tracked_states_solution_file.name, "rb") as temp_file:
+            #         st.download_button(
+            #             label="Download solution",
+            #             data=temp_file,
+            #             # file_name=f"{tracked_states_solution_file}",
+            #             mime="text/csv",
+            #         )
         except Exception as e:
             st.error(f"An error occurred: {e}")
 
