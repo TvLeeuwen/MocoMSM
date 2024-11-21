@@ -5,9 +5,7 @@ from pathlib import Path
 from src.sto_generator import generate_sto
 from src.moco_track_kinematics import moco_track_states
 
-
 def write_to_temp(uploaded_file):
-    os.makedirs("app/output", exist_ok=True)
     temp_path = os.path.join("app/output", uploaded_file.name)
     with open(temp_path, "wb") as f:
         f.write(uploaded_file.getbuffer())
@@ -16,6 +14,9 @@ def write_to_temp(uploaded_file):
 
 # Main ------------------------------------------------------------------------
 st.title("OSim Moco track kinematics")
+
+if os.path.basename(os.getcwd()) == "MocoMSM":
+    os.makedirs("app/output", exist_ok=True)
 
 # Kill server -----------------------------------------------------------------
 if st.button("Stop server"):
@@ -36,25 +37,31 @@ if mat_file is not None:
 if osim_file is not None and mat_file is not None:
     if st.button("Run Moco"):
         try:
+
+            os.chdir("app/output")
             filter_params = {
                 "state_filters": ["jointset"],
                 "invert_filter": False,
             }
 
             sto_file = generate_sto(
-                mat_file,
-                model_file=osim_file,
+                Path(mat_file.name),
+                model_file=Path(osim_file.name),
             )
             st.write(f"Kinematics written: {sto_file}")
             st.write("Running Moco Track...")
 
             tracked_states_solution_file = moco_track_states(
-                osim_file,
-                sto_file,
+                Path(osim_file.name),
+                Path(sto_file.name),
                 filter_params,
             )
             st.success("Script executed successfully!")
             st.write(f"Solution written: {tracked_states_solution_file}")
+
+            os.chdir("../..")
+            print(os.getcwd())
+
 
             # if st.button("Download solution"):
             #     with open(tracked_states_solution_file.name, "rb") as temp_file:

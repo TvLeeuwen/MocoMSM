@@ -124,9 +124,6 @@ def moco_track_states(
     output_file: Path | None = None,
 ) -> Path:
 
-    if model_file.parents[0]:
-        os.chdir(model_file.parents[0])
-        model_file = Path(model_file.name)
 
     # Handle Paths
     input_sto_file = (
@@ -207,6 +204,10 @@ def moco_track_states(
 
 if __name__ == "__main__":
     args = parse_arguments()
+
+    if args.model.parents[0]:
+        os.chdir(args.model.parents[0])
+        model_file = Path(args.model.name)
 
     filter_params = {
         "state_filters": args.filter,
