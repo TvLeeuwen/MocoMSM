@@ -33,8 +33,3 @@ def import_opensim():
             return osim
         except ImportError as e:
             print("Error importing OpenSim after installation:", e)
-
-
-    for dir in site.getsitepackages()
-        print(dir)
-
