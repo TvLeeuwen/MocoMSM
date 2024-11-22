@@ -14,7 +14,7 @@ def import_opensim():
     # Locate the opensim package folder
     opensim_path = None
     for dir in site_packages_dirs:
-        potential_path = os.path.join(dir, "opensim")
+        potential_path = os.path.join(dir, "Lib/opensim")
         if os.path.exists(potential_path):
             opensim_path = potential_path
             break
@@ -33,3 +33,8 @@ def import_opensim():
             return osim
         except ImportError as e:
             print("Error importing OpenSim after installation:", e)
+
+
+    for dir in site.getsitepackages()
+        print(dir)
+

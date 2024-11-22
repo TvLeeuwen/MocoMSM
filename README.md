@@ -2,20 +2,25 @@
 ## Install dependencies
 
 ### Instal MocoMSM virtual environment
-Assuming Anaconda, run 
+Assuming an Anaconda Python distribution: 
+Open Anaconda Prompt, navigate to the MocoMSM repo folder, and run
 
-    `python install_envMocoMSM.py`
+    python install_envMocoMSM.py
+
+If Anaconda is not installed, install Anaconda.
 
 ## Activate MocoMSM
 
-    `conda activate envMocoMSM`
+    conda activate envMocoMSM
 
 ## Moco app
 Run the Moco track app using 
 
-    `streamlit run moco_app.py`.
+    streamlit run moco_app.py
 
 Select or drag and drop the model / kinematics you want to run track.
+
+### Manual conda env install
 
 ## OR run modules individually
 
@@ -29,11 +34,11 @@ Download the publication's SimTK link.
 Copy the `Dromaius_model_v4_intermed.osim` model to a location 
 where you wish to run the analysis, and call 
 
-    `python -m src.moco_emu -m /Path/to/Dromaius_model_v4_intermed.osim`
+    python -m src.moco_emu -m /Path/to/Dromaius_model_v4_intermed.osim
 
 call
 
-    `python -m src.moco_emu -h`
+    python -m src.moco_emu -h
 
 for help.
 
