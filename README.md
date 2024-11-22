@@ -1,44 +1,63 @@
 # MocoMSM
-## Dependencies
+## Install dependencies
 
-### Dedicated OpenSim virtual environment - Python 3.10
-Assuming the use of Anaconda, create a dedicated conda env that runs Python 3.10.
+### Instal MocoMSM virtual environment
+Assuming Anaconda, run 
 
-`conda create -n envMoco python=3.10`
+    `python install_envMocoMSM.py`
 
-Note that envMoco can replaced by any other prefered name.
+## Activate MocoMSM
 
-### YAML
-conda env create -f MocoMSM.yml
-conda env update -f MocoMSM.yml --prune
+    `conda activate envMocoMSM`
 
-### Install opensim
-`conda install -c opensim-org opensim`
+## Moco app
+Run the Moco track app using 
 
-### Pip dependencies
-`pip install pandas numpy pymatreader plotly lxml streamlit`
+    `streamlit run moco_app.py`.
+
+Select or drag and drop the model / kinematics you want to run track.
+
+## OR run modules individually
 
 ## Input
 ### Gait prediction
-Run Moco Emu to predict Emu gait based on Pacha van Bijlert's Emu model
-`Dromaius_model_v4_intermed.osim`
+Run Pacha van Bijlert's [Emu model](https://doi.org/10.1126/sciadv.ado0936),
+a major inspiration for this project, to run the Python version of his gait prediction. 
+Download the publication's SimTK link.
+
+
+Copy the `Dromaius_model_v4_intermed.osim` model to a location 
+where you wish to run the analysis, and call 
+
+    `python -m src.moco_emu -m /Path/to/Dromaius_model_v4_intermed.osim`
+
+call
+
+    `python -m src.moco_emu -h`
+
+for help.
+
 
 ### Motion Tracking - example
-Run Moco Track on Tom Wolf's Guinea Fowl model,
-adapted based on [PennState's Cox Guinea Fowl model](doi: https://doi.org/10.1093/iob/obz022),
+Run 
+
+    `python -m src.moco_track_kinematics -h`
+
+on Tom Wolf's Guinea Fowl model, adapted based on 
+[PennState's Cox Guinea Fowl model](doi: https://doi.org/10.1093/iob/obz022),
 and Kavya Katugam-Dechene kinematic data.
-Select the example model file `GuineaFowl_lumpmodel_new_2D_weldjoint_TvL.osim` 
-and kinematic data file `Loaded_Toes.mat` for the `app/example` directory
 
-## Moco app
-Run the Moco track app using `streamlit run moco_app.py`.
-Select or drag and drop the model / kinematics you want to run track.
+Copy the `app/example` folder to a location where you wish to run the analysis, and 
+Generate a .sto kinematics file for the track analysis based on the example model file
+`GuineaFowl_lumpmodel_new_2D_weldjoint_TvL.osim` and kinematic data file `Loaded_Toes.mat`
+by calling
 
-## OR
 
-## Run modules
-Run individual methods by calling python -m. 
-(e.g. `python -m src.moco_track_kinematics -h`)
+    `python -m src.generate_sto -i=/Path/to/Loaded_Toes.mat -m=(/Path/to/)GuineaFowl_lumpmodel_new_2D_weldjoint_TvL`
+
+using the `-m` and `-s` flags, respectively.
+
+## Modules
 
 ### generate_gait
 Predicts Emu gait from the model alone. Uses a Moco guess to initiate movement

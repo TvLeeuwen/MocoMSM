@@ -1,3 +1,6 @@
+# output folder
+output/
+
 # logfiles
 **/get_paths.py
 
