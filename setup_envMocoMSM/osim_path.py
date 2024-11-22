@@ -17,10 +17,12 @@ def import_opensim():
         potential_path = os.path.join(dir, "Lib/opensim")
         if os.path.exists(potential_path):
             opensim_path = potential_path
+            print(f"{opensim_path} found!")
             break
     if opensim_path:
         try:
             sys.path.insert(0, opensim_path)
+            print("Adding osim to Path")
             import opensim as osim
 
             return osim
