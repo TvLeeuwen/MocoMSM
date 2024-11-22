@@ -1,0 +1,5 @@
+name: envMocoMSM
+channels:
+  - opensim-org
+dependencies:
+  - opensim

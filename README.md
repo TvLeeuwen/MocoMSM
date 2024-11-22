@@ -2,9 +2,15 @@
 ## Dependencies
 
 ### Dedicated OpenSim virtual environment - Python 3.10
-Assuming the use of Anaconda, create a dedicated conda env that runs Python 3.10
+Assuming the use of Anaconda, create a dedicated conda env that runs Python 3.10.
+
 `conda create -n envMoco python=3.10`
+
 Note that envMoco can replaced by any other prefered name.
+
+### YAML
+conda env create -f MocoMSM.yml
+conda env update -f MocoMSM.yml --prune
 
 ### Install opensim
 `conda install -c opensim-org opensim`

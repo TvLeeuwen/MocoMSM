@@ -5,6 +5,7 @@ from pathlib import Path
 from src.sto_generator import generate_sto
 from src.moco_track_kinematics import moco_track_states
 
+
 def write_to_temp(uploaded_file):
     temp_path = os.path.join("app/output", uploaded_file.name)
     with open(temp_path, "wb") as f:
@@ -17,6 +18,8 @@ st.title("OSim Moco track kinematics")
 
 if os.path.basename(os.getcwd()) == "MocoMSM":
     os.makedirs("app/output", exist_ok=True)
+elif os.path.basename(os.getcwd()) == "output":
+    os.chdir("../..")
 
 # Kill server -----------------------------------------------------------------
 if st.button("Stop server"):
@@ -60,7 +63,7 @@ if osim_file is not None and mat_file is not None:
             st.write(f"Solution written: {tracked_states_solution_file}")
 
             os.chdir("../..")
-            print(os.getcwd())
+
 
 
             # if st.button("Download solution"):
@@ -70,7 +73,7 @@ if osim_file is not None and mat_file is not None:
             #             data=temp_file,
             #             # file_name=f"{tracked_states_solution_file}",
             #             mime="text/csv",
-            #         )
+
         except Exception as e:
             st.error(f"An error occurred: {e}")
 
