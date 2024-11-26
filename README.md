@@ -22,6 +22,10 @@ Select or drag and drop the model / kinematics you want to run track.
 
 ### Manual conda env install
 
+    conda install -c opensim-org opens sim
+
+    pip install pandas numpy pymatreader plotly lxml streamlit stpyvista
+
 ## OR run modules individually
 
 ## Input
