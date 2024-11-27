@@ -14,17 +14,35 @@ If Anaconda is not installed, install Anaconda.
     conda activate envMocoMSM
 
 ## Moco app
+
+### Run Moco.track kinematics
 Run the Moco track app using 
 
     streamlit run moco_app.py
 
 Select or drag and drop the model / kinematics you want to run track.
 
-### Manual conda env install
+Press the `Run Moco` button
 
-    conda install -c opensim-org opens sim
+## Manual conda env install
+
+### Create env
+
+    conda create -n envMocoMSM python=3.10
+
+### Activate 
+
+    conda activate envMocoMSM
+
+### Install dependencies (opensim first)
+
+    conda install -c opensim-org openssim
 
     pip install pandas numpy pymatreader plotly lxml streamlit stpyvista
+
+### Remove env
+    
+    conda remove -n envMocoMSM --all
 
 ## OR run modules individually
 
