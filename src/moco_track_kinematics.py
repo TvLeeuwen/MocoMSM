@@ -180,7 +180,7 @@ def moco_track_states(
     solver = osim.MocoCasADiSolver.safeDownCast(study.updSolver())
     solver.set_num_mesh_intervals(100)
     solver.set_optim_max_iterations(3000)
-    solver.set_optim_convergence_tolerance(1e-2)
+    solver.set_optim_convergence_tolerance(1e-1)
     # solver.set_optim_convergence_tolerance(1e-3)
     solver.set_optim_constraint_tolerance(1e-4)
 

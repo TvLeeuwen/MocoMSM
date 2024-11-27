@@ -27,7 +27,6 @@ matplotlib==3.9.2
 mdit-py-plugins==0.4.2
 mdurl==0.1.2
 narwhals==1.14.1
-numpy @ file:///croot/numpy_and_numpy_base_1691091611330/work
 packaging==24.2
 pandas==2.2.3
 panel==1.5.4

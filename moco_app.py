@@ -1,12 +1,14 @@
 # Imports ---------------------------------------------------------------------
 import os
+import math
+import numpy as np
 import streamlit as st
 import pyvista as pv
 from stpyvista import stpyvista
 from pathlib import Path
 
 from utils.io import setup_paths, write_to_output, find_file_in_dir
-from src.sto_generator import generate_sto
+from src.sto_generator import generate_sto, read_input
 from src.moco_track_kinematics import moco_track_states
 
 # Devs ------------------------------------------------------------------------
@@ -19,8 +21,8 @@ def visualize_obj(file_path):
     plotter.add_axes()
     plotter.add_floor()
     plotter.camera_position = 'iso'
-    
     # Save the interactive plot to a file
+
     html_file = "output.html"
     plotter.export_html(html_file)
     return html_file
@@ -32,7 +34,6 @@ st.title("OSim Moco track kinematics")
 if st.button("Stop server"):
     st.warning("Shutting down the server...")
     os._exit(0)
-
 
 # Set up paths ----------------------------------------------------------------
 setup_paths()
@@ -86,7 +87,7 @@ if osim_file is not None and mat_file is not None:
             st.error(f"An error occurred: {e}")
 
 else:
-    st.write("No file uploaded yet. Please drag and drop a file.")
+    st.write("No files uploaded yet. Please drag and drop a file.")
 
 
 # Force vectors ---------------------------------------------------------------
@@ -104,15 +105,34 @@ if st.session_state.moco_solution_path is not None:
         "Moco solution file available:", st.session_state.moco_solution_path
     )
 
-mesh_path = os.path.join(st.session_state.example_path, "Geometry/tmet.vtp")
-print(mesh_path)
-mesh = pv.read(mesh_path)
+# Plotter ---------------------------------------------------------------------
+
+mesh = pv.read(os.path.join(st.session_state.example_path, "Geometry/tmet.vtp"))
+# mesh2 = pv.read(os.path.join(st.session_state.example_path, "Geometry/tibia.vtp"))
+
+# # Define the initial force vector
+# initial_point = np.array([0, 0, 0])  # Arrow origin
+# vector = np.array([.01, 0, 0])  # Initial direction and magnitude
+#
+# # Create the arrow to represent the force vector
+# arrow = pv.Arrow(start=initial_point, direction=vector, scale=1.0)
+
+# Add the arrow to the plotter
+# arrow_actor = plotter.add_mesh(arrow, color="blue")
+
+# Set up a callback to update the arrow
+# def callback(step):
+#     print(step)
+#     arrow_actor.position = [0, step*0.01]
+
 plotter = pv.Plotter(window_size=[400,400])
-plotter.add_mesh(mesh)
+plotter.add_mesh(mesh, color='white')
 # plotter.add_mesh(mesh, scalars='my_scalar', cmap='bwr')
 plotter.view_isometric()
 plotter.add_scalar_bar()
-plotter.background_color = 'white'
+plotter.show_axes()
+plotter.background_color = 'black'
+
 stpyvista(plotter, key="pv_tmet")
 
 
@@ -122,3 +142,21 @@ stpyvista(plotter, key="pv_tmet")
     #         st.write(f"Importing file from: {st.session_state.file_path}")
     #     except Exception as e:
     #         st.error(f"Error importing file: {e}")
+
+if st.button("Animate"):
+    plotter = pv.Plotter(window_size=[400,400])
+    mesh = pv.read(os.path.join(st.session_state.example_path, "Geometry/tmet.vtp"))
+
+    df, header = read_input(Path(st.session_state.moco_solution_path))
+
+    pl = pv.Plotter()
+    actor = pl.add_mesh(mesh, color="white")
+
+    def callback(step):
+        print(math.degrees(df["/jointset/ankle/ankle_flexion/value"].loc[step]))
+        actor.orientation = [math.degrees(df["/jointset/ankle/ankle_flexion/value"].loc[step]), 0, 0]
+
+    pl.add_timer_event(max_steps=200, duration=2000, callback=callback)
+    pl.background_color = 'black'
+    pl.view_isometric()
+    pl.show()
