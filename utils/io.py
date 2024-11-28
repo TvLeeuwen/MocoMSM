@@ -40,6 +40,35 @@ def setup_paths():
         os.chdir(st.session_state.moco_path)
 
 
+def setup_sidebar():
+    if st.sidebar.button("Stop server"):
+        os._exit(0)
+
+    output_files = [
+        f
+        for f in os.listdir(st.session_state.output_path)
+        if os.path.isfile(os.path.join(st.session_state.output_path, f))
+    ]
+    st.sidebar.header("Output folder")
+    st.sidebar.write(f"Find your output in: {st.session_state.output_path}")
+    st.sidebar.header("Output files")
+    if output_files:
+
+        if st.sidebar.button("Clear all output"):
+            for file in os.listdir(st.session_state.output_path):
+                file_path = os.path.join(st.session_state.output_path, file)
+                if os.path.isfile(file_path):
+                    os.unlink(file_path)
+            st.session_state.moco_solution_path = None
+            st.rerun()
+
+        st.sidebar.header("Files")
+        for file in output_files:
+            st.sidebar.write(file)
+    else:
+        st.sidebar.text("Output folder is empty")
+
+
 def find_file_in_dir(directory, string):
     for root, _, files in os.walk(directory):
         for file in files:

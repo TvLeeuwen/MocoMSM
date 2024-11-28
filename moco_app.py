@@ -10,7 +10,7 @@ import plotly.colors as pc
 from stpyvista import stpyvista
 from pathlib import Path
 
-from utils.io import setup_paths, write_to_output
+from utils.io import setup_paths, setup_sidebar, write_to_output
 from src.sto_generator import generate_sto, read_input
 from src.moco_track_kinematics import moco_track_states
 
@@ -22,47 +22,7 @@ st.title("OSim Moco track kinematics")
 setup_paths()
 
 # Sidebar ---------------------------------------------------------------------
-if st.sidebar.button("Stop server"):
-    os._exit(0)
-
-output_files = [
-    f
-    for f in os.listdir(st.session_state.output_path)
-    if os.path.isfile(os.path.join(st.session_state.output_path, f))
-]
-st.sidebar.header("Output folder")
-st.sidebar.write(f"Find your output in: {st.session_state.output_path}")
-st.sidebar.header("Output files")
-if output_files:
-    # # Path to the folder you want to zip
-    # folder_path = st.session_state.output_path
-    # zip_file_path = os.path.join(folder_path, "output.zip")
-    #
-    # # Create a zip file of the folder
-    # shutil.make_archive(zip_file_path.replace("output.zip", ""), "zip", folder_path)
-    #
-    # # Provide a download button for the zip file
-    # with open(zip_file_path, "rb") as f:
-    #     st.sidebar.download_button(
-    #         label="Download output folder",
-    #         data=f,
-    #         file_name="output.zip",
-    #         mime="application/zip",
-    #     )
-
-    if st.sidebar.button("Clear all output"):
-        for file in os.listdir(st.session_state.output_path):
-            file_path = os.path.join(st.session_state.output_path, file)
-            if os.path.isfile(file_path):
-                os.unlink(file_path)
-        st.session_state.moco_solution_path = None
-        st.rerun()
-
-    st.sidebar.header("Files")
-    for file in output_files:
-        st.sidebar.write(file)
-else:
-    st.sidebar.text("Output folder is empty")
+setup_sidebar()
 
 
 # .osim uploader --------------------------------------------------------------
@@ -112,14 +72,6 @@ if st.session_state.osim_file is not None and st.session_state.mat_path is not N
 
             st.success("Script executed successfully!")
             st.write(f"Solution written: {st.session_state.moco_solution_path}")
-
-            # if st.button("Download solution"):
-            #     with open(st.session_state.moco_solution_path.name, "rb") as temp_file:
-            #         st.download_button(
-            #             label="Download solution",
-            #             data=temp_file,
-            #             # file_name=f"{st.session_state.moco_solution_path}",
-            #             mime="text/csv",
 
         except Exception as e:
             st.error(f"An error occurred: {e}")
@@ -226,13 +178,6 @@ if st.session_state.moco_solution_path is not None:
         plotter.background_color = "black"
 
         stpyvista(plotter, key="pv_tmet")
-
-        # if st.button("Show force vectors"):
-        #     try:
-        #         # Here, you can use st.session_state.file_path to load your file
-        #         st.write(f"Importing file from: {st.session_state.file_path}")
-        #     except Exception as e:
-        #         st.error(f"Error importing file: {e}")
 
     if st.button("Animate"):
         plotter = pv.Plotter(window_size=[400, 400])
