@@ -21,9 +21,11 @@ import argparse
 from pathlib import Path
 
 from setup_envMocoMSM.osim_path import import_opensim
+
 osim = import_opensim()
 
 from utils.md_logger import log_md
+
 try:
     from utils.get_paths import md_log_file
 except ImportError:
@@ -71,7 +73,7 @@ def parse_arguments():
         type=str,
         nargs="+",
         default=None,
-        help="Strings to filter visualized data (e.g. jointset angle)- filters out states containing any of the passed filter"
+        help="Strings to filter visualized data (e.g. jointset angle)- filters out states containing any of the passed filter",
     )
     parser.add_argument(
         "-if",
@@ -106,7 +108,7 @@ def set_state_weights(
             print(f"Tracking: {state_name}")
     track.set_states_weight_set(state_weights)
     print(f"-- Tracking {tracked_states} / {len(state_names)} states")
-    # Reported marker weights when calling Moco seem to be bugged: 
+    # Reported marker weights when calling Moco seem to be bugged:
     # always reports non-kinematic states as weight=1.0
     # use verbose flag to look at set weights which should be the correct ones.
     if verbose:
@@ -125,7 +127,6 @@ def moco_track_states(
     filter_params: dict,
     output_file: Path | None = None,
 ) -> Path:
-
     # Handle Paths
     input_sto_file = (
         Path(input_sto_file.name)
@@ -156,7 +157,6 @@ def moco_track_states(
     track.setStatesReference(table_processor)
     table = table_processor.process()
 
-
     # Set weights
     state_names = table.getColumnLabels()
     state_weights = osim.MocoWeightSet()
@@ -174,12 +174,13 @@ def moco_track_states(
     track.set_track_reference_position_derivatives(True)
     track.set_initial_time(table.getIndependentColumn()[0])
     track.set_final_time(table.getIndependentColumn()[-2])
+    track.set_mesh_interval(0.02)
     track.set_apply_tracked_states_to_guess(True)
 
     study = track.initialize()
     solver = osim.MocoCasADiSolver.safeDownCast(study.updSolver())
-    solver.set_num_mesh_intervals(100)
-    solver.set_optim_max_iterations(3000)
+    # solver.set_num_mesh_intervals(len(table.getIndependentColumn()))
+    solver.set_optim_max_iterations(5000)
     solver.set_optim_convergence_tolerance(1e-1)
     # solver.set_optim_convergence_tolerance(1e-3)
     solver.set_optim_constraint_tolerance(1e-4)
@@ -198,7 +199,9 @@ def moco_track_states(
         full_stride = osim.createPeriodicTrajectory(solution)
         full_stride.write(output_file.stem + "_fullstride.sto")
 
-        print(f"-- Tracking succesful, writing:\n - {str(output_file)}\n - {str(output_file.stem + '_fullstride.sto')}")
+        print(
+            f"-- Tracking succesful, writing:\n - {str(output_file)}\n - {str(output_file.stem + '_fullstride.sto')}"
+        )
 
     return output_file
 
