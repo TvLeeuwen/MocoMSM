@@ -3,6 +3,7 @@ import os
 import time
 import math
 import shutil
+import numpy as np
 import streamlit as st
 import pyvista as pv
 import plotly.graph_objects as go
@@ -155,11 +156,11 @@ if st.session_state.moco_solution_path is not None:
         # mesh2 = pv.read(os.path.join(st.session_state.example_path, "Geometry/tibia.vtp"))
 
         # # Define the initial force vector
-        # initial_point = np.array([0, 0, 0])  # Arrow origin
+        # vector_origin = np.array([0, 0, 0])  # Arrow origin
         # vector = np.array([.01, 0, 0])  # Initial direction and magnitude
         #
         # # Create the arrow to represent the force vector
-        # arrow = pv.Arrow(start=initial_point, direction=vector, scale=1.0)
+        # arrow = pv.Arrow(start=vector_origin, direction=vector, scale=1.0)
 
         # Add the arrow to the plotter
         # arrow_actor = plotter.add_mesh(arrow, color="blue")
@@ -194,14 +195,45 @@ if st.session_state.moco_solution_path is not None:
         pl = pv.Plotter()
         actor = pl.add_mesh(mesh, color="white")
 
+        force_vector = pl.add_mesh(
+            pv.Arrow(
+                start=[
+                    -0.0062599999999999999,
+                    -0.0025200000000000001,
+                    -0.00055000000000000003,
+                ],
+                direction=[1, 0, 0],
+                scale=0.1,
+            ),
+            color="red",
+        )
+        force_vector2 = pl.add_mesh(
+            pv.Arrow(
+                start=[0.00313, -0.01427, 0.0013500000000000001],
+                direction=[-1, 0, 0],
+                scale=0.1,
+            ),
+            color="blue",
+        )
+
         def callback(step):
-            print(math.degrees(df["/jointset/ankle/ankle_flexion/value"].loc[step]))
-            actor.orientation = [
-                math.degrees(df["/jointset/ankle/ankle_flexion/value"].loc[step]),
-                0,
-                0,
+            print(step % len(df["time"]))
+            force_vector.scale = df["/forceset/FL_p_test/normalized_tendon_force"].loc[
+                step % len(df["time"])
             ]
 
-        pl.add_timer_event(max_steps=200, duration=2000, callback=callback)
+            force_vector2.scale = df["/forceset/TC_t_test/normalized_tendon_force"].loc[
+                step % len(df["time"])
+            ]
+
+            # arrow_actor.scale = [
+            #     0,
+            #     df["/forceset/FL_p_test/normalized_tendon_force"].loc[step],
+            #     0,
+            # ]
+
+        pl.add_timer_event(
+            max_steps=len(df["time"]) * 3, duration=10, callback=callback
+        )
         pl.background_color = "black"
         pl.show()
