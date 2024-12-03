@@ -1,17 +1,17 @@
 # Imports ---------------------------------------------------------------------
 import os
-import time
 import math
-import shutil
 import numpy as np
 import streamlit as st
 import pyvista as pv
+import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 import plotly.colors as pc
 from stpyvista import stpyvista
 from pathlib import Path
 
 from utils.io import setup_paths, setup_sidebar, write_to_output
+from utils.osim_model_parser import parse_model_for_force_vector
 from src.sto_generator import generate_sto, read_input
 from src.moco_track_kinematics import moco_track_states
 
@@ -149,38 +149,87 @@ if st.session_state.moco_solution_path is not None and os.path.exists(
 
 # Force vectors ---------------------------------------------------------------
 # 3D Plot ---------------------------------------------------------------------
-if st.session_state.moco_solution_path is not None:
+if (
+    st.session_state.moco_solution_path is not None
+    and st.session_state.osim_file is not None
+):
     st.subheader("3D Plot")
     if st.button("Plot 3D"):
         mesh = pv.read(os.path.join(st.session_state.example_path, "Geometry/tmet.vtp"))
         # mesh2 = pv.read(os.path.join(st.session_state.example_path, "Geometry/tibia.vtp"))
+        df, header = read_input(
+            Path(
+                os.path.join(
+                    st.session_state.output_path, st.session_state.moco_solution_path
+                )
+            )
+        )
 
-        # # Define the initial force vector
-        # vector_origin = np.array([0, 0, 0])  # Arrow origin
-        # vector = np.array([.01, 0, 0])  # Initial direction and magnitude
-        #
-        # # Create the arrow to represent the force vector
-        # arrow = pv.Arrow(start=vector_origin, direction=vector, scale=1.0)
+        print(
+            df["time"].loc[int(len(df["time"]) / 4)],
+            math.degrees(
+                df["/jointset/ankle/ankle_flexion/value"].loc[int(len(df["time"]) / 4)]
+            ),
+        )
 
-        # Add the arrow to the plotter
-        # arrow_actor = plotter.add_mesh(arrow, color="blue")
+        muscle_vector_data = parse_model_for_force_vector(
+            st.session_state.osim_file, st.session_state.moco_solution_path
+        )
+        muscle_names = list(muscle_vector_data.keys())
+        colors = plt.cm.gist_rainbow(np.linspace(0, 1, len(muscle_names)))
 
-        # Set up a callback to update the arrow
-        # def callback(step):
-        #     print(step)
-        #     arrow_actor.position = [0, step*0.01]
-
+        force_vectors = {}
         plotter = pv.Plotter(window_size=[400, 400])
+        for muscle, color in zip(muscle_vector_data, colors):
+            rgb_color = color[:3]
+
+            plotter.add_mesh(
+                pv.PolyData(muscle_vector_data[muscle]["origin"]),
+                color=rgb_color,
+                point_size=20,
+                render_points_as_spheres=True,
+            )
+            force_vectors[muscle] = plotter.add_mesh(
+                pv.Arrow(
+                    start=muscle_vector_data[muscle]["origin"],
+                    direction=[
+                        0,
+                        math.degrees(
+                            df["/jointset/ankle/ankle_flexion/value"].loc[
+                                int(len(df["time"]) / 4)
+                            ]
+                        ),
+                        0,
+                    ],
+                    scale=0.1,
+                ),
+                color=rgb_color,
+            )
+            force_vectors[muscle].orientation = [
+                0,
+                0,
+                math.degrees(
+                    df["/jointset/ankle/ankle_flexion/value"].loc[
+                        int(len(df["time"]) / 4)
+                    ]
+                ),
+            ]
+            force_vectors[muscle].position = muscle_vector_data[muscle]["origin"]
+
         plotter.add_mesh(mesh, color="white")
-        # plotter.add_mesh(mesh, scalars='my_scalar', cmap='bwr')
-        plotter.view_isometric()
-        plotter.add_scalar_bar()
-        plotter.show_axes()
         plotter.background_color = "black"
 
+        # plotter.add_mesh(mesh, scalars='my_scalar', cmap='bwr')
         stpyvista(plotter, key="pv_tmet")
 
-    if st.button("Animate"):
+    # Animate -----------------------------------------------------------------
+
+    if "is_animating" not in st.session_state:
+        st.session_state.is_animating = False
+
+    if st.button("Animate") and not st.session_state.is_animating:
+        st.session_state.is_animating = True
+
         plotter = pv.Plotter(window_size=[400, 400])
         mesh = pv.read(os.path.join(st.session_state.example_path, "Geometry/tmet.vtp"))
 
@@ -195,45 +244,66 @@ if st.session_state.moco_solution_path is not None:
         pl = pv.Plotter()
         actor = pl.add_mesh(mesh, color="white")
 
-        force_vector = pl.add_mesh(
-            pv.Arrow(
-                start=[
-                    -0.0062599999999999999,
-                    -0.0025200000000000001,
-                    -0.00055000000000000003,
-                ],
-                direction=[1, 0, 0],
-                scale=0.1,
-            ),
-            color="red",
+        # Add muscle - cycle through muscle list - get name, origin and direction from previous path point
+        # Get muscle names from .osim
+        # Origin = last path point from .osim? - Double check with Julia
+        # Directon = vector between origin and second-to-last pathpoint - ask Julia about conditional paths
+        # Scale = force magnitude from solution.sto
+
+        muscle_vector_data = parse_model_for_force_vector(
+            st.session_state.osim_file, st.session_state.moco_solution_path
         )
-        force_vector2 = pl.add_mesh(
-            pv.Arrow(
-                start=[0.00313, -0.01427, 0.0013500000000000001],
-                direction=[-1, 0, 0],
-                scale=0.1,
-            ),
-            color="blue",
-        )
+        muscle_names = list(muscle_vector_data.keys())
+        colors = plt.cm.gist_rainbow(np.linspace(0, 1, len(muscle_names)))
+
+        force_vectors = {}
+        for muscle, color in zip(muscle_vector_data, colors):
+            rgb_color = color[:3]
+
+            pl.add_mesh(
+                pv.PolyData(muscle_vector_data[muscle]["second_to_last_location"]),
+                color=rgb_color,
+                point_size=20,
+                render_points_as_spheres=True,
+            )
+            pl.add_mesh(
+                pv.PolyData(muscle_vector_data[muscle]["origin"]),
+                color=rgb_color,
+                point_size=20,
+                render_points_as_spheres=True,
+            )
+            force_vectors[muscle] = pl.add_mesh(
+                pv.Arrow(
+                    start=muscle_vector_data[muscle]["origin"],
+                    direction=muscle_vector_data[muscle]["vector_orientation"],
+                    scale=0.1,
+                ),
+                color=rgb_color,
+            )
 
         def callback(step):
             print(step % len(df["time"]))
-            force_vector.scale = df["/forceset/FL_p_test/normalized_tendon_force"].loc[
-                step % len(df["time"])
-            ]
+            for muscle in muscle_vector_data:
+                force_vectors[muscle].scale = df[
+                    "/forceset/FL_p_test/normalized_tendon_force"
+                ].loc[step % len(df["time"])]
+                force_vectors[muscle].orientation = [
+                    0,
+                    0,
+                    math.degrees(
+                        df["/jointset/ankle/ankle_flexion/value"].loc[
+                            step % len(df["time"])
+                        ]
+                    ),
+                ]
+                force_vectors[muscle].position = muscle_vector_data[muscle]["origin"]
 
-            force_vector2.scale = df["/forceset/TC_t_test/normalized_tendon_force"].loc[
-                step % len(df["time"])
-            ]
+        pl.add_timer_event(max_steps=len(df["time"]), duration=10, callback=callback)
 
-            # arrow_actor.scale = [
-            #     0,
-            #     df["/forceset/FL_p_test/normalized_tendon_force"].loc[step],
-            #     0,
-            # ]
-
-        pl.add_timer_event(
-            max_steps=len(df["time"]) * 3, duration=10, callback=callback
-        )
+        pl.view_xy()
         pl.background_color = "black"
         pl.show()
+
+        pl.close()
+        st.session_state.is_animating = False
+

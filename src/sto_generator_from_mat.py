@@ -5,7 +5,7 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 
-from utils.osim_model_parser import parse_model
+from utils.osim_model_parser import parse_model_for_states
 from sto_generator import read_input, write_header, write_columns
 
 from utils.md_logger import log_md
@@ -76,7 +76,7 @@ def sto_from_model(
     df, header = read_input(input_file)
 
     print(f"-- Reading model: {model_file}")
-    states = parse_model(model_file)
+    states = parse_model_for_states(model_file)
 
     df2 = pd.DataFrame(0, index=range(len(df["time"])), columns=states)
     df2["time"] = df["time"]

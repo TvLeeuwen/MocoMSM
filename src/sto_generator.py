@@ -8,8 +8,9 @@ from pymatreader import read_mat
 import plotly.graph_objects as go
 
 from utils.filters import filter_states, filter_states_visualization
-from utils.osim_model_parser import parse_model
+from utils.osim_model_parser import parse_model_for_states
 from utils.md_logger import log_md
+from utils.osim_model_parser import parse_model_for_joints
 
 try:
     from utils.get_paths import md_log_file
@@ -76,7 +77,7 @@ def parse_arguments():
 
 
 # Defs ------------------------------------------------------------------------
-def read_input(input_file):
+def read_input(input_file, model_file=None):
     """
     Generate .sto based on input file type.
 
@@ -120,12 +121,12 @@ def read_input(input_file):
         df = df.rename(columns={"FrameNumber": "time"})
         df["time"] = df["time"] / framerate
 
-        df = df.rename(columns={"kneeAng": "/jointset/knee/knee_flexion/value"})
-        df = df.rename(columns={"kneeAngvel": "/jointset/knee/knee_flexion/speed"})
-        df = df.rename(columns={"kneeAngacc": "/jointset/knee/knee_flexion/accel"})
-        df = df.rename(columns={"ankleAng": "/jointset/ankle/ankle_flexion/value"})
-        df = df.rename(columns={"ankleAngvel": "/jointset/ankle/ankle_flexion/speed"})
-        df = df.rename(columns={"ankleAngacc": "/jointset/ankle/ankle_flexion/accel"})
+        joint_states = parse_model_for_joints(model_file)
+        for joint in joint_states:
+            for state in joint_states[joint]:
+                df = df.rename(columns={f"{joint}Ang": f"/jointset/{joint}/{state}/value"})
+                df = df.rename(columns={f"{joint}Angvel": f"/jointset/{joint}/{state}/speed"})
+                df = df.rename(columns={f"{joint}Angacc": f"/jointset/{joint}/{state}/accel"})
 
         # df[
         #     [
@@ -186,16 +187,13 @@ def visualize_states(df):
 
 def generate_df_from_model(model_file, df):
     print(f"-- Reading model: {model_file}")
-    states = parse_model(model_file)
+    states = parse_model_for_states(model_file)
 
     df2 = pd.DataFrame(0, index=range(len(df["time"])), columns=states)
     df2["time"] = df["time"]
 
     # Hardcoded filter
     for state in states:
-        # if "jointset" in state and "ground" not in state:
-        #     print(f" - Writing state: {state}")
-        #     df2[state] = df[state]
         if "jointset" in state:
             print(f" - Writing state: {state}")
             df2[state] = df[state]
@@ -246,7 +244,7 @@ def generate_sto(
     if filter_params["state_filters"]:
         df = filter_states(df, filter_params)
 
-    df, header = read_input(input_file)
+    df, header = read_input(input_file, model_file=model_file)
 
     if input_file.suffix == ".mat":
         if model_file:
