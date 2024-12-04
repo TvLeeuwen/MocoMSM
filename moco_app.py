@@ -18,9 +18,6 @@ from src.sto_generator import generate_sto, read_input
 from src.moco_track_kinematics import moco_track_states
 
 
-# Defs ------------------------------------------------------------------------
-
-
 # Main ------------------------------------------------------------------------
 st.title("OSim Moco track kinematics")
 
@@ -62,19 +59,25 @@ if st.session_state.osim_file is not None and st.session_state.mat_path is not N
                 "invert_filter": False,
             }
 
-            st.session_state.kinematics_path = generate_sto(
-                Path(st.session_state.mat_path.name),
-                model_file=Path(st.session_state.osim_file.name),
+            kinematics_path = generate_sto(
+                Path(st.session_state.mat_path),
+                model_file=Path(st.session_state.osim_file),
+            )
+            st.session_state.kinematics_path = os.path.join(
+                st.session_state.output_path, str(kinematics_path)
             )
             st.write(f"Kinematics written: {st.session_state.kinematics_path}")
             st.write("Running Moco Track...")
 
-            st.session_state.moco_solution_path = moco_track_states(
-                Path(st.session_state.osim_file.name),
-                Path(st.session_state.kinematics_path.name),
+            solution_path = moco_track_states(
+                Path(st.session_state.osim_file),
+                Path(st.session_state.kinematics_path),
                 filter_params,
             )
             os.chdir(st.session_state.moco_path)
+            st.session_state.moco_solution_path = os.path.join(
+                st.session_state.output_path, str(solution_path)
+            )
 
             st.success("Script executed successfully!")
             st.write(f"Solution written: {st.session_state.moco_solution_path}")
@@ -86,8 +89,11 @@ else:
     st.write("No files uploaded yet. Please drag and drop a file.")
 
 # 2D Plot ---------------------------------------------------------------------
-if st.session_state.moco_solution_path is not None:
+if st.session_state.moco_solution_path is not None and os.path.exists(
+    st.session_state.moco_solution_path
+):
     st.subheader("Compare timeseries")
+
     df, _ = read_input(st.session_state.kinematics_path)
     df2, _ = read_input(st.session_state.moco_solution_path)
 
@@ -139,83 +145,11 @@ if st.session_state.moco_solution_path is not None:
         use_container_width=True,
     )
 
-
 # Force vectors ---------------------------------------------------------------
-# 3D Plot ---------------------------------------------------------------------
 if (
-    st.session_state.moco_solution_path is not None
-    and st.session_state.osim_file is not None
+    st.session_state.osim_file is not None
+    and st.session_state.moco_solution_path is not None
 ):
-    st.subheader("3D Plot")
-    if st.button("Plot 3D"):
-        mesh = pv.read(os.path.join(st.session_state.example_path, "Geometry/tmet.vtp"))
-        # mesh2 = pv.read(os.path.join(st.session_state.example_path, "Geometry/tibia.vtp"))
-        df, header = read_input(
-            Path(
-                os.path.join(
-                    st.session_state.output_path, st.session_state.moco_solution_path
-                )
-            )
-        )
-
-        print(
-            df["time"].loc[int(len(df["time"]) / 4)],
-            math.degrees(
-                df["/jointset/ankle/ankle_flexion/value"].loc[int(len(df["time"]) / 4)]
-            ),
-        )
-
-        muscle_vector_data = parse_model_for_force_vector(
-            st.session_state.osim_file, st.session_state.moco_solution_path
-        )
-        muscle_names = list(muscle_vector_data.keys())
-        colors = plt.cm.gist_rainbow(np.linspace(0, 1, len(muscle_names)))
-
-        force_vectors = {}
-        plotter = pv.Plotter(window_size=[400, 400])
-        for muscle, color in zip(muscle_vector_data, colors):
-            rgb_color = color[:3]
-
-            plotter.add_mesh(
-                pv.PolyData(muscle_vector_data[muscle]["origin"]),
-                color=rgb_color,
-                point_size=20,
-                render_points_as_spheres=True,
-            )
-            force_vectors[muscle] = plotter.add_mesh(
-                pv.Arrow(
-                    start=muscle_vector_data[muscle]["origin"],
-                    direction=[
-                        0,
-                        math.degrees(
-                            df["/jointset/ankle/ankle_flexion/value"].loc[
-                                int(len(df["time"]) / 4)
-                            ]
-                        ),
-                        0,
-                    ],
-                    scale=0.1,
-                ),
-                color=rgb_color,
-            )
-            # This need to come from line of action instaed
-            force_vectors[muscle].orientation = [
-                0,
-                0,
-                math.degrees(
-                    df["/jointset/ankle/ankle_flexion/value"].loc[
-                        int(len(df["time"]) / 4)
-                    ]
-                ),
-            ]
-            force_vectors[muscle].position = muscle_vector_data[muscle]["origin"]
-
-        plotter.add_mesh(mesh, color="white")
-        plotter.background_color = "black"
-
-        # plotter.add_mesh(mesh, scalars='my_scalar', cmap='bwr')
-        stpyvista(plotter, key="pv_tmet")
-
     # Gif ---------------------------------------------------------------------
     if st.button("Generate gif"):
         #  Multiprocess gif generations because plotter.close() crashes streamlit

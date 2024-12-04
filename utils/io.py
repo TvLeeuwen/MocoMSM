@@ -22,26 +22,28 @@ def setup_paths():
             st.session_state.moco_path, "app/example"
         )
 
-    if "moco_solution_path" not in st.session_state:
-        st.session_state.moco_solution_path = os.path.join(
-            st.session_state.output_path,
-            find_file_in_dir(
-                st.session_state.output_path,
-                "success.sto",
-            ),
-        )
-    if "kinematics_path" not in st.session_state:
-        st.session_state.kinematics_path = os.path.join(
-            st.session_state.output_path,
-            find_file_in_dir(
-                st.session_state.output_path,
-                "moco_track_states.sto",
-            ),
-        )
     if "gif_path" not in st.session_state:
         st.session_state.gif_path = os.path.join(
             st.session_state.output_path, "vectors.gif"
         )
+
+    if "kinematics_path" not in st.session_state:
+        st.session_state.kinematics_path = find_file_in_dir(
+            st.session_state.output_path,
+            "moco_track_states.sto",
+        )
+    if "moco_solution_path" not in st.session_state:
+        st.session_state.moco_solution_path = find_file_in_dir(
+            st.session_state.output_path,
+            "success.sto",
+        )
+
+    # if "moco_solution_path" not in st.session_state:
+    #     st.session_state.moco_solution_path = None
+
+    if "kinematics_path" not in st.session_state:
+        st.session_state.kinematics_path = None
+
 
     # Keep dir on homedir on refresh - may get stuck in /output
     if os.getcwd() == st.session_state.moco_path:

@@ -205,7 +205,6 @@ def moco_track_states(
 
     return output_file
 
-
 if __name__ == "__main__":
     args = parse_arguments()
 

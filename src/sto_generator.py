@@ -261,7 +261,7 @@ def generate_sto(
         df_filtered = filter_states_visualization(df, filter_params)
         visualize_states(df_filtered)
 
-    return Path(output_file)
+    return output_file
 
 
 if __name__ == "__main__":
