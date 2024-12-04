@@ -86,6 +86,7 @@ def read_input(input_file, model_file=None):
     """
     df = None
     header = []
+    input_file = Path(input_file)
     if input_file.suffix == ".sto":
         with open(input_file, "r") as file:
             header = []

@@ -1,10 +1,11 @@
 # Imports ---------------------------------------------------------------------
 import os
+import time
 import math
 import numpy as np
+import multiprocessing
 import streamlit as st
 import pyvista as pv
-import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 import plotly.colors as pc
 from stpyvista import stpyvista
@@ -12,8 +13,12 @@ from pathlib import Path
 
 from utils.io import setup_paths, setup_sidebar, write_to_output
 from utils.osim_model_parser import parse_model_for_force_vector
+from utils.generate_gif import generate_force_vector_gif
 from src.sto_generator import generate_sto, read_input
 from src.moco_track_kinematics import moco_track_states
+
+
+# Defs ------------------------------------------------------------------------
 
 
 # Main ------------------------------------------------------------------------
@@ -81,22 +86,10 @@ else:
     st.write("No files uploaded yet. Please drag and drop a file.")
 
 # 2D Plot ---------------------------------------------------------------------
-if st.session_state.moco_solution_path is not None and os.path.exists(
-    os.path.join(st.session_state.output_path, st.session_state.moco_solution_path)
-):
+if st.session_state.moco_solution_path is not None:
     st.subheader("Compare timeseries")
-    df, _ = read_input(
-        Path(
-            os.path.join(st.session_state.output_path, st.session_state.kinematics_path)
-        )
-    )
-    df2, _ = read_input(
-        Path(
-            os.path.join(
-                st.session_state.output_path, st.session_state.moco_solution_path
-            )
-        )
-    )
+    df, _ = read_input(st.session_state.kinematics_path)
+    df2, _ = read_input(st.session_state.moco_solution_path)
 
     color_scale_df = pc.get_colorscale("Viridis")
     fig = go.Figure()
@@ -205,6 +198,7 @@ if (
                 ),
                 color=rgb_color,
             )
+            # This need to come from line of action instaed
             force_vectors[muscle].orientation = [
                 0,
                 0,
@@ -222,88 +216,28 @@ if (
         # plotter.add_mesh(mesh, scalars='my_scalar', cmap='bwr')
         stpyvista(plotter, key="pv_tmet")
 
-    # Animate -----------------------------------------------------------------
-
-    if "is_animating" not in st.session_state:
-        st.session_state.is_animating = False
-
-    if st.button("Animate") and not st.session_state.is_animating:
-        st.session_state.is_animating = True
-
-        plotter = pv.Plotter(window_size=[400, 400])
-        mesh = pv.read(os.path.join(st.session_state.example_path, "Geometry/tmet.vtp"))
-
-        df, header = read_input(
-            Path(
-                os.path.join(
-                    st.session_state.output_path, st.session_state.moco_solution_path
-                )
-            )
+    # Gif ---------------------------------------------------------------------
+    if st.button("Generate gif"):
+        #  Multiprocess gif generations because plotter.close() crashes streamlit
+        process = multiprocessing.Process(
+            target=generate_force_vector_gif,
+            args=(
+                st.session_state.osim_file,
+                os.path.join(st.session_state.example_path, "Geometry/tmet.vtp"),
+                st.session_state.moco_solution_path,
+                st.session_state.gif_path,
+            ),
         )
+        process.start()
+        with st.spinner("Generating GIF..."):
+            while process.is_alive():
+                time.sleep(0.1)
+        process.join()
 
-        pl = pv.Plotter()
-        actor = pl.add_mesh(mesh, color="white")
-
-        # Add muscle - cycle through muscle list - get name, origin and direction from previous path point
-        # Get muscle names from .osim
-        # Origin = last path point from .osim? - Double check with Julia
-        # Directon = vector between origin and second-to-last pathpoint - ask Julia about conditional paths
-        # Scale = force magnitude from solution.sto
-
-        muscle_vector_data = parse_model_for_force_vector(
-            st.session_state.osim_file, st.session_state.moco_solution_path
-        )
-        muscle_names = list(muscle_vector_data.keys())
-        colors = plt.cm.gist_rainbow(np.linspace(0, 1, len(muscle_names)))
-
-        force_vectors = {}
-        for muscle, color in zip(muscle_vector_data, colors):
-            rgb_color = color[:3]
-
-            pl.add_mesh(
-                pv.PolyData(muscle_vector_data[muscle]["second_to_last_location"]),
-                color=rgb_color,
-                point_size=20,
-                render_points_as_spheres=True,
-            )
-            pl.add_mesh(
-                pv.PolyData(muscle_vector_data[muscle]["origin"]),
-                color=rgb_color,
-                point_size=20,
-                render_points_as_spheres=True,
-            )
-            force_vectors[muscle] = pl.add_mesh(
-                pv.Arrow(
-                    start=muscle_vector_data[muscle]["origin"],
-                    direction=muscle_vector_data[muscle]["vector_orientation"],
-                    scale=0.1,
-                ),
-                color=rgb_color,
-            )
-
-        def callback(step):
-            print(step % len(df["time"]))
-            for muscle in muscle_vector_data:
-                force_vectors[muscle].scale = df[
-                    "/forceset/FL_p_test/normalized_tendon_force"
-                ].loc[step % len(df["time"])]
-                force_vectors[muscle].orientation = [
-                    0,
-                    0,
-                    math.degrees(
-                        df["/jointset/ankle/ankle_flexion/value"].loc[
-                            step % len(df["time"])
-                        ]
-                    ),
-                ]
-                force_vectors[muscle].position = muscle_vector_data[muscle]["origin"]
-
-        pl.add_timer_event(max_steps=len(df["time"]), duration=10, callback=callback)
-
-        pl.view_xy()
-        pl.background_color = "black"
-        pl.show()
-
-        pl.close()
-        st.session_state.is_animating = False
-
+if st.session_state.gif_path is not None and os.path.isfile(
+    st.session_state.gif_path,
+):
+    st.image(
+        st.session_state.gif_path,
+        caption="Force vector over time",
+    )

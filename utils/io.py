@@ -23,14 +23,24 @@ def setup_paths():
         )
 
     if "moco_solution_path" not in st.session_state:
-        st.session_state.moco_solution_path = find_file_in_dir(
+        st.session_state.moco_solution_path = os.path.join(
             st.session_state.output_path,
-            "success.sto",
+            find_file_in_dir(
+                st.session_state.output_path,
+                "success.sto",
+            ),
         )
     if "kinematics_path" not in st.session_state:
-        st.session_state.kinematics_path = find_file_in_dir(
+        st.session_state.kinematics_path = os.path.join(
             st.session_state.output_path,
-            "moco_track_states.sto",
+            find_file_in_dir(
+                st.session_state.output_path,
+                "moco_track_states.sto",
+            ),
+        )
+    if "gif_path" not in st.session_state:
+        st.session_state.gif_path = os.path.join(
+            st.session_state.output_path, "vectors.gif"
         )
 
     # Keep dir on homedir on refresh - may get stuck in /output
@@ -53,7 +63,6 @@ def setup_sidebar():
     st.sidebar.write(f"Find your output in: {st.session_state.output_path}")
     st.sidebar.header("Output files")
     if output_files:
-
         if st.sidebar.button("Clear all output"):
             for file in os.listdir(st.session_state.output_path):
                 file_path = os.path.join(st.session_state.output_path, file)
