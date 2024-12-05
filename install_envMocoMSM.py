@@ -5,6 +5,19 @@ import subprocess
 import os
 import textwrap
 
+# Check for existing envMocoMSM
+try:
+    result = subprocess.run(["conda", "env", "list"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    if 'envMocoMSM' in result.stdout:
+        try:
+            subprocess.run(["conda", "remove", "-n", "envMocoMSM", "--all", "--y"])
+        except Exception as e:
+            print(f"Error removing envMocoMSM: {e}")
+            os._exit(0)
+
+except Exception as e:
+    print(f"Error checking Conda environments: {e}")
+
 try:
     subprocess.run(
         ["conda", "env", "create", "-f", "setup_envMocoMSM/envMocoMSM.yml"],

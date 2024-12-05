@@ -13,7 +13,7 @@ def generate_force_vector_gif(osim_file, mesh_path, solution_path, gif_path):
     df, _ = read_input(solution_path)
 
     # Initiate plotter
-    pl = pv.Plotter(off_screen=True)
+    pl = pv.Plotter(off_screen=False)
     pl.view_xy()
     pl.camera.zoom(2.5)
     pl.background_color = "black"

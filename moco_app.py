@@ -14,7 +14,7 @@ from pathlib import Path
 from utils.io import setup_paths, setup_sidebar, write_to_output
 from utils.osim_model_parser import parse_model_for_force_vector
 from utils.generate_gif import generate_force_vector_gif
-from src.sto_generator import generate_sto, read_input
+from src.sto_generator import generate_sto, read_input, read_mat_to_df
 from src.moco_track_kinematics import moco_track_states
 
 
@@ -48,6 +48,11 @@ if st.session_state.mat_path is not None:
     st.session_state.mat_path = write_to_output(
         st.session_state.mat_path, st.session_state.output_path
     )
+
+if st.session_state.mat_path is not None:
+    with st.expander("Show .mat jointnames", expanded=False):
+        df = read_mat_to_df(st.session_state.mat_path)
+        st.write([col[:-3] for col in df if col.endswith("Ang")])
 
 # Run Moco --------------------------------------------------------------------
 if st.session_state.osim_file is not None and st.session_state.mat_path is not None:

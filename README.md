@@ -13,6 +13,15 @@ If Anaconda is not installed, install Anaconda.
 
     conda activate envMocoMSM
 
+## Update envMocoMSM
+Make sure envMocoMSM is not active, if it is run
+
+    conda deactivate
+
+Rerun the installer script by running
+
+    python install_envMocoMSM.py
+
 ## Moco app
 
 ### Run Moco.track kinematics
@@ -38,7 +47,7 @@ Press the `Run Moco` button
 
     conda install -c opensim-org openssim
 
-    pip install pandas numpy pymatreader plotly lxml streamlit stpyvista
+    pip install pandas numpy pymatreader plotly lxml streamlit pyvista stpyvista imageio
 
 ### Remove env
     

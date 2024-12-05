@@ -77,6 +77,12 @@ def parse_arguments():
 
 
 # Defs ------------------------------------------------------------------------
+def read_mat_to_df(input_file):
+    data = read_mat(input_file)
+    # print(data.keys())
+    return pd.DataFrame(data["WeightedToes"])
+
+
 def read_input(input_file, model_file=None):
     """
     Generate .sto based on input file type.
@@ -96,10 +102,8 @@ def read_input(input_file, model_file=None):
                     break
         df = pd.read_csv(input_file, sep="\t", skiprows=len(header))
     elif input_file.suffix == ".mat":
-        data = read_mat(input_file)
 
-        # print(data.keys())
-        df = pd.DataFrame(data["WeightedToes"])
+        df = read_mat_to_df(input_file)
 
         # states = jointset, forceset/activation, forceset/normalized_tendon_force
         # controls = forceset/muscles
@@ -124,7 +128,9 @@ def read_input(input_file, model_file=None):
 
         joint_states = parse_model_for_joints(model_file)
         for joint in joint_states:
+            print(f"- {joint}")
             for state in joint_states[joint]:
+                print(f"-- {state}")
                 df = df.rename(columns={f"{joint}Ang": f"/jointset/{joint}/{state}/value"})
                 df = df.rename(columns={f"{joint}Angvel": f"/jointset/{joint}/{state}/speed"})
                 df = df.rename(columns={f"{joint}Angacc": f"/jointset/{joint}/{state}/accel"})
@@ -193,7 +199,7 @@ def generate_df_from_model(model_file, df):
     df2 = pd.DataFrame(0, index=range(len(df["time"])), columns=states)
     df2["time"] = df["time"]
 
-    # Hardcoded filter
+    # Hardcoded kinematics filter
     for state in states:
         if "jointset" in state:
             print(f" - Writing state: {state}")
