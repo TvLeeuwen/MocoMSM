@@ -5,6 +5,8 @@ import os
 from pathlib import Path
 import streamlit as st
 
+from src.sto_generator import read_mat_to_df
+
 
 # Defs ------------------------------------------------------------------------
 def setup_paths():
@@ -37,13 +39,16 @@ def setup_paths():
             st.session_state.output_path,
             "success.sto",
         )
-
-    # if "moco_solution_path" not in st.session_state:
-    #     st.session_state.moco_solution_path = None
-
-    if "kinematics_path" not in st.session_state:
-        st.session_state.kinematics_path = None
-
+    if "force_origins_path" not in st.session_state:
+        st.session_state.force_origins_path = find_file_in_dir(
+            st.session_state.output_path,
+            "muscle_origins.json",
+        )
+    if "force_vectors_path" not in st.session_state:
+        st.session_state.force_vectors_path = find_file_in_dir(
+            st.session_state.output_path,
+            "muscle_vectors.json",
+        )
 
     # Keep dir on homedir on refresh - may get stuck in /output
     if os.getcwd() == st.session_state.moco_path:
@@ -92,4 +97,31 @@ def write_to_output(file, output_dir):
     file_path = os.path.join(output_dir, file.name)
     with open(file_path, "wb") as f:
         f.write(file.getbuffer())
-    return Path(file_path)
+
+    return file_path
+
+
+def osim_uploader():
+    st.session_state.osim_file = st.file_uploader(
+        "Drag and drop you .osim model here",
+        type=["osim"],
+    )
+    if st.session_state.osim_file is not None:
+        st.session_state.osim_file = write_to_output(
+            st.session_state.osim_file, st.session_state.output_path
+        )
+
+
+def mat_uploader():
+    st.session_state.mat_path = st.file_uploader(
+        "Drag and drop you .mat data file here", type=[".mat"]
+    )
+    if st.session_state.mat_path is not None:
+        st.session_state.mat_path = write_to_output(
+            st.session_state.mat_path, st.session_state.output_path
+        )
+
+    if st.session_state.mat_path is not None:
+        with st.expander("Show .mat keyvalues", expanded=False):
+            df = read_mat_to_df(st.session_state.mat_path)
+            st.write([col[:-3] for col in df if col.endswith("Ang")])

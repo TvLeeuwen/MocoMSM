@@ -232,6 +232,8 @@ def generate_sto(
 
     returns: `output_file`: Path to generated .sto
     """
+    print("-- Generating kinematics .sto")
+    print(output_file)
     output_file = (
         model_file.with_name(model_file.stem + "_moco_track_states.sto")
         if output_file is None and model_file is not None
@@ -266,6 +268,8 @@ def generate_sto(
         visualize_states(df)
         df_filtered = filter_states_visualization(df, filter_params)
         visualize_states(df_filtered)
+
+    print(f"-- Done, writin:\n - {output_file}")
 
     return output_file
 

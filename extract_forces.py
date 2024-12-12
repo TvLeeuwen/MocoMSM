@@ -12,7 +12,9 @@ from src.sto_generator import read_input
 # Load the OpenSim model
 osim_file = "./app/output/GuineaFowl_lumpmodel_new_2D_weldjoint_TvL.osim"
 sto_file = "./app/output/GuineaFowl_lumpmodel_new_2D_weldjoint_TvL_moco_track_states_solution_success.sto"
+
 model = osim.Model(osim_file)
+
 state = model.initSystem()
 
 # Load the Moco solution
@@ -21,10 +23,8 @@ sto_data = osim.TimeSeriesTable(sto_file)
 # Extract model coordinate names
 model_coordinates = {coord.getName(): coord for coord in model.getCoordinateSet()}
 
-# Map .sto labels to coordinate names
 sto_labels = sto_data.getColumnLabels()
 
-# Extract coordinate name from .sto labels
 sto_to_coord_map = {}
 for label in sto_labels:
     if "/value" in label:  # Only process coordinate value labels
@@ -34,15 +34,18 @@ for label in sto_labels:
 
 
 def extract_muscle_lines(model, state, sto_data, sto_to_coord_map):
-    data = {"time": []}
+    force_directions = {"time": []}
+    force_origin = {}
     muscles = model.getMuscles()
     for muscle_name in [muscles.get(i).getName() for i in range(muscles.getSize())]:
-        data[muscle_name] = []
+        force_directions[muscle_name] = []
+        force_origin[muscle_name] = []
 
     # Iterate through time steps in the .sto file
     for time_index in range(sto_data.getNumRows()):
+        print(time_index)
         time = sto_data.getIndependentColumn()[time_index]
-        data["time"].append(time)
+        force_directions["time"].append(time)
 
         # Update the model
         for sto_label, coord_name in sto_to_coord_map.items():
@@ -59,24 +62,87 @@ def extract_muscle_lines(model, state, sto_data, sto_to_coord_map):
             point_force_directions = osim.ArrayPointForceDirection()
             geom_path.getPointForceDirections(state, point_force_directions)
 
-            insertion_point = point_force_directions.getSize() - 1
-            pfd = point_force_directions.get(insertion_point)
-            data[muscle.getName()].append(
+            # Last point
+            insertion_index = point_force_directions.getSize() - 1
+
+            pfd = point_force_directions.get(insertion_index)
+            insertion_in_ground = [
+                pfd.frame().findStationLocationInGround(state, pfd.point())[0],
+                pfd.frame().findStationLocationInGround(state, pfd.point())[1],
+                pfd.frame().findStationLocationInGround(state, pfd.point())[2],
+            ]
+            print(f"Insertion: {insertion_in_ground}")
+
+            pfd2 = point_force_directions.get(insertion_index - 1)
+            previous_in_ground = [
+                pfd2.frame().findStationLocationInGround(state, pfd2.point())[0],
+                pfd2.frame().findStationLocationInGround(state, pfd2.point())[1],
+                pfd2.frame().findStationLocationInGround(state, pfd2.point())[2],
+            ]
+            print(f"Previous: {previous_in_ground}")
+
+            vector = [
+                v1 - v2 for v1, v2 in zip(previous_in_ground, insertion_in_ground)
+            ]
+            normalized_vector = vector / np.linalg.norm(vector)
+            print(f"Normalized: {normalized_vector}")
+
+            prev_in_insertion = pfd2.frame().findStationLocationInAnotherFrame(
+                state, pfd2.point(), pfd.frame()
+            )
+            print(prev_in_insertion)
+            changed_vector = pfd2.frame().expressVectorInAnotherFrame(
+                state,
+                pfd2.direction(),
+                pfd.frame(),
+            )
+            print(normalized_vector, changed_vector)
+
+            force_directions[muscle.getName()].append(
                 [
-                    math.degrees(pfd.direction()[2]),
-                    math.degrees(pfd.direction()[0]),
-                    math.degrees(pfd.direction()[1]),
+                    math.degrees(normalized_vector[0]),
+                    math.degrees(normalized_vector[1]),
+                    math.degrees(normalized_vector[2]),
                 ]
+                # [
+                #     math.degrees(pfd.direction()[0]),
+                #     math.degrees(pfd.direction()[1]),
+                #     math.degrees(pfd.direction()[2]),
+                # ]
+                # [
+                #     math.degrees(transformed_direction[2]),
+                #     math.degrees(transformed_direction[0]),
+                #     math.degrees(transformed_direction[1]),
+                # ]
             )
 
-    # Convert the list of dictionaries into a DataFrame
-    df = pd.DataFrame(data)
+            if time_index == 0:
+                force_origin[muscle.getName()] = [
+                    prev_in_insertion.get(0),
+                    prev_in_insertion.get(1),
+                    prev_in_insertion.get(2),
+                ]
+            else:
+                if force_origin[muscle.getName()] != [
+                    prev_in_insertion.get(0),
+                    prev_in_insertion.get(1),
+                    prev_in_insertion.get(2),
+                ]:
+                    print("Warning - force vector origin has shifted!")
+                    force_origin[muscle.getName()] = [
+                        prev_in_insertion.get(0),
+                        prev_in_insertion.get(1),
+                        prev_in_insertion.get(2),
+                    ]
 
-    return df
+    # Convert the list of dictionaries into a DataFrame
+    df = pd.DataFrame(force_directions)
+
+    return df, force_origin
 
 
 # Call the function
-muscle_lines_df = extract_muscle_lines(
+muscle_lines_df, muscle_origin = extract_muscle_lines(
     model,
     state,
     sto_data,
@@ -95,6 +161,7 @@ def generate_force_vector_gif(
     mesh_path,
     solution_path,
     df_line_of_action,
+    muscle_origin,
     gif_path,
 ):
     print("Time for gif")
@@ -106,6 +173,7 @@ def generate_force_vector_gif(
     pl.view_xy()
     pl.camera.zoom(2.5)
     pl.background_color = "black"
+    pl.add_axes(interactive=True)
 
     # Add actors - mesh
     actor = pl.add_mesh(mesh, color="white")
@@ -123,6 +191,12 @@ def generate_force_vector_gif(
             pv.PolyData(muscle_vector_data[muscle]["origin"]),
             color=rgb_color,
             point_size=20,
+            render_points_as_spheres=True,
+        )
+        pl.add_mesh(
+            pv.PolyData(muscle_origin[muscle]),
+            color="blue",
+            point_size=30,
             render_points_as_spheres=True,
         )
         force_vectors[muscle] = pl.add_mesh(
@@ -160,10 +234,12 @@ def generate_force_vector_gif(
 
 
 mesh_file = "./app/example/Geometry/tmet.vtp"
+
 generate_force_vector_gif(
     osim_file,
     mesh_file,
     sto_file,
     muscle_lines_df,
+    muscle_origin,
     "vectors.gif",
 )
