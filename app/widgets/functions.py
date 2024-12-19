@@ -30,7 +30,7 @@ def run_moco(moco_path, osim_path, mat_path, output_path):
             st.write(f"Kinematics written: {st.session_state.kinematics_path}")
             st.write("Running Moco Track...")
 
-            solution_path = moco_track_states(
+            solution_path, muscle_fiber_path = moco_track_states(
                 Path(osim_path),
                 Path(st.session_state.kinematics_path),
                 filter_params,
@@ -39,12 +39,16 @@ def run_moco(moco_path, osim_path, mat_path, output_path):
             st.session_state.moco_solution_path = os.path.join(
                 output_path, str(solution_path)
             )
+            st.session_state.moco_solution_muscle_fiber_path = os.path.join(
+                output_path, str(muscle_fiber_path)
+            )
 
             st.success("Script executed successfully!")
             st.write(f"Solution written: {st.session_state.moco_solution_path}")
 
         except Exception as e:
             st.error(f"An error occurred: {e}")
+            os.chdir(moco_path)
 
 
 def force_vector_extraction(model, sto_data, output_path):

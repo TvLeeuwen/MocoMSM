@@ -38,6 +38,11 @@ def setup_paths():
             st.session_state.output_path,
             "success.sto",
         )
+    if "moco_solution_muscle_fiber_path" not in st.session_state:
+        st.session_state.moco_solution_muscle_fiber_path = find_file_in_dir(
+            st.session_state.output_path,
+            "muscle_fiber.sto",
+        )
     if "force_origins_path" not in st.session_state:
         st.session_state.force_origins_path = find_file_in_dir(
             st.session_state.output_path,

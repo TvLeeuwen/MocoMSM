@@ -66,38 +66,29 @@ def visual_compare_timeseries(sto1, sto2):
     )
 
 
-def visual_validate_muscle_parameters(sto1, sto2):
+def visual_validate_muscle_parameters(sto1):
     df, _ = read_input(sto1)
-    df2, _ = read_input(sto2)
 
     color_scale_df = pc.get_colorscale("Viridis")
     fig = go.Figure()
     for i, column in enumerate(df.columns):
-        if column != "time":
+        if (
+            column != "time"
+        ):
+            state_name = column.split('|')[1]
             fig.add_trace(
                 go.Scatter(
                     x=df.index,
                     y=df[column],
                     mode="lines",
                     line=dict(color=color_scale_df[i % len(color_scale_df)][1]),
-                    name=f"Input: {column}",
-                    legendgroup=column,
-                )
-            )
-    for column in df2.columns:
-        if column != "time":
-            fig.add_trace(
-                go.Scatter(
-                    x=df2.index,
-                    y=df2[column],
-                    mode="lines",
-                    name=f"Output: {column}",
-                    legendgroup=column,
+                    name=column,
+                    # legendgroup=column,
+                    legendgroup=state_name,
                 )
             )
 
     fig.update_layout(
-        title=f"{os.path.basename(sto1)}\n versus\n{os.path.basename(sto2)}",
         height=1000,
         xaxis_title="Time (s)",
         yaxis_title="Value",
@@ -126,7 +117,6 @@ def visual_force_vector_gif(
     force_vectors_path,
     output_path,
 ):
-
     # TODO - change to model_solution_vectors.gif
     st.session_state.gif_path = os.path.join(output_path, "force_vectors.gif")
 
