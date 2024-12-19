@@ -2,7 +2,6 @@
 
 # Imports ---------------------------------------------------------------------
 import os
-from pathlib import Path
 import streamlit as st
 
 from src.sto_generator import read_mat_to_df
