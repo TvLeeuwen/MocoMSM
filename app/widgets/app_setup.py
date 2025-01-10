@@ -9,9 +9,12 @@ def setup_app():
             st.Page(page_moco, title="Moco"),
             st.Page(page_force_vector, title="Force vectors"),
         ],
+        "FE": [
+            st.Page(page_FE, title="FE"),
+        ],
         "Output": [
             st.Page(page_output, title="Output"),
-        ]
+        ],
     }
 
     pg = st.navigation(pages)

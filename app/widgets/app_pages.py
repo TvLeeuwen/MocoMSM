@@ -12,7 +12,7 @@ from app.widgets.app_visuals import (
 
 # Defs ------------------------------------------------------------------------
 def page_home():
-    st.title("Home page")
+    st.title("Input")
     st.write(f"Home directory: {st.session_state.moco_path}")
 
     osim_uploader()
@@ -98,6 +98,10 @@ def page_force_vector():
             caption="Force vector over time",
         )
 
+
+def page_FE():
+    st.title("Finite element")
+    st.write(st.session_state)
 
 def page_output():
     st.title("Output")
