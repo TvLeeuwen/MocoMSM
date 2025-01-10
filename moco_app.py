@@ -1,9 +1,10 @@
 # Imports ---------------------------------------------------------------------
+from app.widgets.app_io import setup_paths
 from app.widgets.app_setup import setup_app
-from app.widgets.io import setup_paths
 
 # Main ------------------------------------------------------------------------
-setup_paths()
-app_pages = setup_app()
+if __name__ == '__main__':
 
-app_pages.run()
+    setup_paths()
+    app = setup_app()
+    app.run()

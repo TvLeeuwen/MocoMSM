@@ -4,10 +4,8 @@ from app.widgets.app_pages import *
 
 def setup_app():
     pages = {
-        "App": [
-            st.Page(page_home, title="Home"),
-        ],
         "MSM": [
+            st.Page(page_home, title="Input"),
             st.Page(page_moco, title="Moco"),
             st.Page(page_force_vector, title="Force vectors"),
         ],

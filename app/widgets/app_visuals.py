@@ -44,7 +44,7 @@ def visual_compare_timeseries(sto1, sto2):
             )
 
     fig.update_layout(
-        title=f"{os.path.basename(sto1)}\n versus\n{os.path.basename(sto2)}",
+        # title=f"{os.path.basename(sto1)}\n versus\n{os.path.basename(sto2)}",
         height=1000,
         xaxis_title="Time (s)",
         yaxis_title="Value",

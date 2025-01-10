@@ -1,9 +1,9 @@
 # Imports ---------------------------------------------------------------------
 import os
 import streamlit as st
-from app.widgets.io import osim_uploader, mat_uploader
-from app.widgets.functions import run_moco, force_vector_extraction
-from app.widgets.visuals import (
+from app.widgets.app_io import osim_uploader, mat_uploader
+from app.widgets.app_functions import run_moco, force_vector_extraction
+from app.widgets.app_visuals import (
     visual_compare_timeseries,
     visual_validate_muscle_parameters,
     visual_force_vector_gif,
@@ -12,7 +12,6 @@ from app.widgets.visuals import (
 
 # Defs ------------------------------------------------------------------------
 def page_home():
-
     st.title("Home page")
     st.write(f"Home directory: {st.session_state.moco_path}")
 
@@ -25,7 +24,7 @@ def page_home():
 def page_moco():
     st.title("Run Moco track kinematics")
 
-    # Run Moco --------------------------------------------------------------------
+    # Run Moco ----------------------------------------------------------------
     if st.session_state.osim_path is not None and st.session_state.mat_path is not None:
         st.subheader("Moco kinematics tracking")
         run_moco(
@@ -35,20 +34,20 @@ def page_moco():
             st.session_state.output_path,
         )
     else:
-        st.write("No files uploaded yet. Please drag and drop a file.")
+        st.write("No files uploaded yet. Please drag and drop a file to run Moco.")
 
-    # Compare kinematics ----------------------------------------------------------
+    # Compare kinematics ------------------------------------------------------
     if st.session_state.moco_solution_path is not None and os.path.exists(
         st.session_state.moco_solution_path
     ):
-        st.subheader("Compare timeseries")
+        st.subheader("Validate output versus input")
 
         visual_compare_timeseries(
             st.session_state.kinematics_path,
             st.session_state.moco_solution_path,
         )
 
-    # Validate muscle parameters --------------------------------------------------
+    # Validate muscle parameters ----------------------------------------------
     if st.session_state.moco_solution_muscle_fiber_path is not None and os.path.exists(
         st.session_state.moco_solution_muscle_fiber_path
     ):
@@ -59,7 +58,6 @@ def page_moco():
         )
 
 
-# Force vectors ---------------------------------------------------------------
 def page_force_vector():
     st.header("Force vector extraction")
     try:
@@ -71,7 +69,6 @@ def page_force_vector():
         st.session_state.osim_path is not None
         and st.session_state.moco_solution_path is not None
     ):
-        # Gif ---------------------------------------------------------------------
         force_vector_extraction(
             st.session_state.osim_path,
             st.session_state.moco_solution_path,
@@ -115,7 +112,9 @@ def page_output():
     if output_files:
         st.subheader("Files")
         for file_name in output_files:
-            with open(os.path.join(st.session_state.output_path, file_name), "rb") as file:
+            with open(
+                os.path.join(st.session_state.output_path, file_name), "rb"
+            ) as file:
                 file_data = file.read()
                 st.download_button(
                     label=f"{file_name}",
